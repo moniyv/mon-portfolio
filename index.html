@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yasmine Redouani</title>
+    <style>
+        @font-face {
+            font-family: 'Alte Haas Grotesk';
+            src: url('fonts/AlteHaasGrotesk.woff2') format('woff2'),
+                 url('fonts/AlteHaasGrotesk.woff') format('woff');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Apply the font globally */
+        html, bo-cedy, input, button, textarea, select {
+            font-family: 'Alte Haas Grotesk', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        h1 {
+            font-family: 'Alte Haas Grotesk', 'Helvetica Neue', Arial, sans-serif;
+            text-align: right;
+            font-weight: 800;
+            font-size: 16px;
+            margin: 12px 0 0 0;
+            cursor: default;
+        }
+        /* layout: left panel + right panel */
+        .container {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .left-panel {
+            flex: 0 0 50%;
+            background: transparent;
+            border: none;
+            padding: 0 12px 0 20px; /* même recul que le nom côté droit */
+            color: #222;
+            min-height: 120px;
+        }
+        .city-label {
+            font-family: 'Alte Haas Grotesk', 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 800;
+            font-size: 16px; /* même taille que le h1 */
+            line-height: 1.4;
+            text-align: left;
+            margin-top: 12px;
+            cursor: default;
+        }
+        /* lien contact sous "Montréal" */
+        .contact-toggle {
+            margin-top: 4px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;      /* même taille que "Montréal" */
+            line-height: 1.4;
+            text-align: left;
+            font-weight: 800;      /* même graisse que "Montréal" */
+            color: #222;           /* même opacité/couleur que "Montréal" */
+        }
+
+        .contact-email {
+            margin-top: 2px;
+            font-size: 12px;       /* plus petit, comme les bullets */
+            line-height: 1.2;
+            text-align: left;
+            color: rgba(102,102,102,0.8); /* gris */
+            display: none;
+        }
+        .contact-email.visible {
+            display: block;
+        }
+
+        .right-panel {
+            flex: 1 1 50%;
+            padding-right: 20px;
+            text-align: right; /* ensure content inside is right-aligned */
+        }
+
+        .middle-panel {
+            flex: 0 0 15%;
+            padding: 8px 12px;
+            color: #222;
+            min-height: 120px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            text-align: left;
+            transform: translateX(-20px);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+        }
+        .middle-panel.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .middle-panel p {
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: left;
+            margin: 0;
+            color: #000000;
+        }
+
+        /* styles for the numbered list below the title */
+        .item-list {
+            margin: 6px 0 0 0;
+            padding: 0;
+            list-style-position: outside;
+            width: 100%;
+            text-align: right; /* make list flush to the right edge of the right-panel */
+            direction: rtl; /* put markers on the right */
+        }
+        .item-list li {
+            color: rgba(102,102,102,0.8); /* slightly more transparent dark gray */
+            font-size: 12px;
+            line-height: 1.2;
+            cursor: pointer;
+            margin: 4px 0;
+            direction: ltr; /* keep text readable */
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+            text-transform: uppercase; /* all items uppercase by default */
+        }
+        .item-list li:focus { outline: none; }
+
+        /* empty circular marker left of the number */
+        .item-list li::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            border: 1px solid rgba(102,102,102,0.8);
+            background: transparent;
+            box-sizing: border-box;
+            flex: 0 0 auto;
+        }
+        /* filled when active */
+        .item-list li.active::before {
+            background: #FF46A2;
+            border-color: #FF46A2;
+        }
+        /* make the number/text black when the item is active */
+        .item-list li.active {
+            color: #000;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden; /* we'll scroll inside .scroll-wrapper */
+        }
+
+        .scroll-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* specimen image sizing */
+        .specimen-embed img{
+            width: 85%;
+            max-width: 600px;
+            height: auto;
+            max-height: 80vh;
+            display: block;
+            margin: 0 0 12px 0; /* small space between stacked images */
+            object-fit: contain;
+            background: transparent;
+        }
+
+        /* wrapper + smaller first image for APAP page only */
+        .apap-main-wrapper {
+            width: 85%;              /* align right edge with other APAP wrappers */
+            max-width: 600px;
+            margin: 20px 0 28px 0;   /* same horizontal margin pattern as others */
+            position: relative;
+        }
+
+        .specimen-embed img.apap-main {
+            width: 42.5%;            /* keep the image visually smaller */
+            margin: 0 0 0 20%;       /* recreate the previous left offset */
+        }
+
+        /* labels now on the left, non-rotated, left-justified */
+        .apap-label,
+        .apap-label-second,
+        .apap-label-third,
+        .apap-label-fourth {
+            display: block;
+            margin: 0 0 4px 0;
+            text-align: left;
+            color: #FF46A2;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        /* wrapper + label for second APAP image */
+        .apap-second-wrapper {
+            width: 85%;
+            max-width: 600px;
+            margin: 0 0 12px 0;
+            position: relative;
+        }
+
+        .specimen-embed img.apap-second {
+            width: 100%;
+            margin: 0;
+        }
+
+        /* wrapper + label for third APAP image */
+        .apap-third-wrapper {
+            width: 85%;
+            max-width: 600px;
+            margin: 0 0 12px 0;
+            position: relative;
+        }
+
+        .specimen-embed img.apap-third {
+            width: 100%;
+            margin: 0;
+        }
+
+        /* wrapper + label for fourth APAP image */
+        .apap-fourth-wrapper {
+            width: 85%;
+            max-width: 600px;
+            margin: 0 0 12px 0;
+            position: relative;
+        }
+
+        .specimen-embed img.apap-fourth {
+            width: 100%;
+            margin: 0;
+        }
+
+        /* Eartea wrappers + labels */
+        .eartea-wrapper {
+            width: 85%;
+            max-width: 600px;
+            margin: 0 0 12px 0;
+            position: relative;
+        }
+        /* première image eartea alignée avec la première image APAP */
+        .eartea-wrapper:first-of-type {
+            margin-top: 20px;
+        }
+        .specimen-embed img.eartea-image {
+            width: 100%;
+            margin: 0;
+        }
+        .eartea-label {
+            display: block;
+            margin: 0 0 4px 0;
+            text-align: left;
+            color: #FF46A2;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        /* hide native scrollbar inside scroll-wrapper */
+        .scroll-wrapper {
+            scrollbar-width: none; /* Firefox */
+        }
+        .scroll-wrapper::-webkit-scrollbar {
+            width: 0;
+            height: 0; /* WebKit */
+        }
+
+        /* custom scroll dot overlay (pink, like bullet) */
+        .scroll-dot {
+            position: fixed;
+            right: 4px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #FF46A2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-out;
+            z-index: 999;
+        }
+
+        .click-dot {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #FF46A2;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .click-dot.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* name stays a fixed color (no flashing) */
+
+        .back-to-top {
+            margin: 12px 0 1cm auto;
+            padding: 4px 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 18px;
+            display: block;
+            text-align: right;
+            color: #FF46A2;
+        }
+
+        .details-toggle {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #FF46A2; /* ligne "description du projet" en rose */
+        }
+        .details-extra {
+            display: none;
+        }
+        .details-extra.visible {
+            display: block; /* texte affiché en dessous */
+        }
+
+        /* bouton ENG/FR en bas à droite */
+        .lang-toggle {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            z-index: 1000;
+            border: none;
+            background: transparent;
+            color: #FF46A2;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 6px;
+            text-transform: uppercase;
+        }
+
+        /* Media query pour mobile : polices légèrement plus grandes */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 17px;
+            }
+            .city-label,
+            .contact-toggle {
+                font-size: 17px;
+            }
+            .contact-email {
+                font-size: 13px;
+            }
+            .item-list li {
+                font-size: 13px;
+            }
+            .middle-panel p {
+                font-size: 13px;
+            }
+            .apap-label,
+            .apap-label-second,
+            .apap-label-third,
+            .apap-label-fourth,
+            .eartea-label {
+                font-size: 12px;
+            }
+            .back-to-top {
+                font-size: 19px;
+            }
+            .lang-toggle {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-wrapper">
+    <div class="container">
+        <aside id="left-panel" class="left-panel" aria-live="polite"></aside>
+
+        <div id="middle-panel" class="middle-panel" aria-live="polite"></div>
+
+        <main class="right-panel">
+            <h1>Yasmine Redouani</h1>
+
+            <ol id="item-list" class="item-list">
+                <li data-id="1" tabindex="0">specimen type</li>
+                <li data-id="2" tabindex="0">apap</li>
+                <li data-id="3" tabindex="0">eartea</li>
+            </ol>
+        </main>
+    </div>
+    <div class="click-dot" aria-hidden="true"></div>
+    </div>
+
+    <div class="scroll-dot" aria-hidden="true"></div>
+
+    <!-- bouton de langue -->
+    <button type="button" class="lang-toggle" aria-label="Switch language">ENG</button>
+
+    <script>
+        const items = {
+            1: `<div class="specimen-embed">
+                <img src="caution.jpg" alt="caution page 0" loading="lazy">
+
+                <img src="caution 3.jpeg" alt="caution page 3" loading="lazy">
+                    <img src="caution 4.jpeg" alt="caution page 4" loading="lazy">
+                    <img src="caution 5.jpeg" alt="caution page 5" loading="lazy">
+                    <img src="caution 6.jpeg" alt="caution page 6" loading="lazy">
+                    <img src="caution 8.jpeg" alt="caution page 8" loading="lazy">
+                    <img src="caution 9.jpeg" alt="caution page 9" loading="lazy">
+                    <img src="caution 10.jpeg" alt="caution page 10" loading="lazy">
+                    <img src="caution 11.jpeg" alt="caution page 11" loading="lazy">
+                    <img src="caution 12.jpeg" alt="caution page 12" loading="lazy">
+                    <img src="caution 13.jpeg" alt="caution page 13" loading="lazy">
+                    <img src="caution 14.jpeg" alt="caution page 14" loading="lazy">
+                    <img src="caution 15.jpeg" alt="caution page 15" loading="lazy">
+                    <img src="caution 16.jpeg" alt="caution page 16" loading="lazy">
+                    <img src="caution 17.jpeg" alt="caution page 17" loading="lazy">
+                    <img src="caution 18.jpeg" alt="caution page 18" loading="lazy">
+                    <img src="caution 19.jpeg" alt="caution page 19" loading="lazy">
+                    <img src="caution 20.jpeg" alt="caution page 20" loading="lazy">
+                    <img src="caution 21.jpeg" alt="caution page 21" loading="lazy">
+                    <img src="caution 22.jpeg" alt="caution page 22" loading="lazy">
+                    <img src="caution 23.jpeg" alt="caution page 23" loading="lazy">
+                    <img src="caution 24.jpeg" alt="caution page 24" loading="lazy">
+                    <img src="caution 25.jpeg" alt="caution page 25" loading="lazy">
+                    <img src="caution 26.jpeg" alt="caution page 26" loading="lazy">
+                    <img src="caution 27.jpeg" alt="caution page 27" loading="lazy">
+                    <img src="caution 28.jpeg" alt="caution page 28" loading="lazy">
+                    <img src="caution 29.jpeg" alt="caution page 29" loading="lazy">
+                    <img src="caution 30.jpeg" alt="caution page 30" loading="lazy">
+                    <img src="caution 31.jpeg" alt="caution page 31" loading="lazy">
+                    <img src="caution 32.jpeg" alt="caution page 32" loading="lazy">
+                    <button class="back-to-top" type="button" onclick="scrollToTop()">↑</button>
+                </div>`,
+            2: `<div class="specimen-embed">
+                <div class="apap-main-wrapper">
+                    <span class="apap-label">logo</span>
+                    <img class="apap-main" src="apap1.PNG" alt="apap image 1" loading="lazy">
+                </div>
+                <div class="apap-second-wrapper">
+                    <span class="apap-label-second">dépliant</span>
+                    <img class="apap-second" src="apap2.JPG" alt="apap image 2" loading="lazy">
+                </div>
+                <img src="apap3.JPG" alt="apap image 3" loading="lazy">
+                <img src="apap4.JPEG" alt="apap image 4" loading="lazy">
+                <img src="apap5.JPEG" alt="apap image 5" loading="lazy">
+                <img src="apap6.JPEG" alt="apap image 6" loading="lazy">
+                <img src="apap7.JPEG" alt="apap image 7" loading="lazy">
+                <div class="apap-third-wrapper">
+                    <span class="apap-label-third">produit</span>
+                    <img class="apap-third" src="apap8.JPG" alt="apap image 8" loading="lazy">
+                </div>
+                <img src="apap9.JPG" alt="apap image 9" loading="lazy">
+                <div class="apap-fourth-wrapper">
+                    <span class="apap-label-fourth">feed instagram</span>
+                    <img class="apap-fourth" src="apap10.jpg" alt="apap image 10" loading="lazy">
+                </div>
+                <button class="back-to-top" type="button" onclick="scrollToTop()">↑</button>
+                </div>`,
+            3: `<div class="specimen-embed">
+                <div class="eartea-wrapper">
+                    <span class="eartea-label">face</span>
+                    <img class="eartea-image" src="eartea/eartea6.jpeg" alt="eartea image 6" loading="lazy">
+                </div>
+                <div class="eartea-wrapper">
+                    <!-- aucun label pour cette image -->
+                    <img class="eartea-image" src="eartea/eartea5.jpeg" alt="eartea image 5" loading="lazy">
+                </div>
+                <div class="eartea-wrapper">
+                    <span class="eartea-label">derrière</span>
+                    <img class="eartea-image" src="eartea/eartea2.jpeg" alt="eartea image 2" loading="lazy">
+                </div>
+                <div class="eartea-wrapper">
+                    <span class="eartea-label">dessus</span>
+                    <img class="eartea-image" src="eartea/eartea3.jpeg" alt="eartea image 3" loading="lazy">
+                </div>
+                <div class="eartea-wrapper">
+                    <span class="eartea-label">dessous</span>
+                    <img class="eartea-image" src="eartea/eartea4.jpeg" alt="eartea image 4" loading="lazy">
+                </div>
+                <div class="eartea-wrapper">
+                    <span class="eartea-label">côté</span>
+                    <img class="eartea-image" src="eartea/eartea1.jpeg" alt="eartea image 1" loading="lazy">
+                </div>
+                <button class="back-to-top" type="button" onclick="scrollToTop()">↑</button>
+                </div>`
+        };
+
+        const details = {
+            1: `<p>
+                <span class="details-toggle">description du projet</span>
+                <span class="details-extra">
+                <br><br>CAUTION / AMOUR<br><br>
+                Projet collaboratif avec Thomas Chap&nbsp;Vinette<br><br>
+                Ce projet explore la signalisation de danger à travers une approche typographique qui met en tension deux registres opposés&nbsp;: la caution et l’amour. L’objectif est d’analyser comment les éléments graphiques associés au danger parviennent à capter l’attention, transmettre un message clair et provoquer une réaction immédiate, même dans un contexte de stress ou de menace.<br><br>
+                Le projet prend la forme d’une série de dix livrets de spécimen typographique. Chaque livret évalue une caractéristique spécifique de la signalisation de danger, telles que la lisibilité, le contraste, la hiérarchie, la répétition ou l’impact visuel. Pour chaque caractéristique, une composition illustrative évoque une pancarte ou un dispositif de mise en garde, traduite par la typographie, la mise en page et la structure du livret.<br><br>
+                Le contenu textuel du spécimen est volontairement romantique. Les textes proviennent d’extraits de la section «&nbsp;coup de pouce au destin&nbsp;» de Craigslist, une catégorie où des personnes tentent de retrouver une connexion manquée sans moyen direct de contacter l’autre. Ce contenu intime et vulnérable est détourné et traité comme matière typographique.
+                </span></p>`,
+            2: `<p>
+                <span class="details-toggle">description du projet</span>
+                <span class="details-extra">
+                <br><br><strong>ARTISANPIECESAUTHENTICPURPOSE</strong><br><br>
+                Ce projet consiste à développer l’identité visuelle complète d’une entreprise spécialisée dans la conception de casquettes fabriquées à partir de matériaux recyclés. La marque allie savoir-faire, design contemporain et respect de l’environnement, en s’inscrivant dans une démarche de mode responsable et durable.<br><br>
+                L’univers visuel s’inspire directement de la culture streetwear et de l’esthétique urbaine contemporaine. L’identité vise à refléter une marque avant-gardiste, ancrée dans la ville. Le logo trouve son origine dans l’histoire de la casquette de baseball. Il est directement inspiré de Brooklyn, lieu associé aux pionniers de la casquette et symbole fort de la culture streetwear. Cette référence permet d’ancrer la marque dans un héritage urbain authentique. Bref, APAP s’inspire directement de la culture streetwear et valorise une culture urbaine et contemporaine.
+                </span></p>`,
+            3: `<p>
+                <span class="details-toggle">description du projet</span>
+                <span class="details-extra">
+                <br><br><strong>EMBALLAGE POUR PRODUIT CULINAIRE DURABLE</strong><br><br>
+                Ce projet consiste en la création d’un emballage destiné à un objet culinaire conçu selon des principes de durabilité et de réutilisation. L’objectif était de développer un emballage capable de communiquer clairement les valeurs écologiques du produit.<br><br>
+                Le produit présenté est une capsule de thé réutilisable, pensée pour limiter le gaspillage associé aux capsules à usage unique. Après l’infusion, la capsule peut également être utilisée comme fertilisant pour le jardinage à domicile, prolongeant ainsi le cycle de vie du produit et transformant son usage en geste écologique.
+                </span></p>`
+        };
+
+        /* versions anglaises des descriptions (contenu ajouté) */
+        const detailsEn = {
+            1: `<p>
+                <span class="details-toggle">project description</span>
+                <span class="details-extra">
+                <br><br><strong>CAUTION / LOVE</strong><br><br>
+                Collaborative project with Thomas Chap&nbsp;Vinette.<br><br>
+                This project explores warning signage through a typographic approach that brings two opposing registers into tension: caution and love. It examines how graphic elements associated with danger can capture attention, convey a clear message and trigger an immediate reaction, even under stress or threat.<br><br>
+                The project takes the form of a series of ten typographic specimen booklets. Each booklet evaluates one specific feature of warning signage, such as legibility, contrast, hierarchy, repetition or visual impact. For each feature, an illustrative composition evokes a sign or warning device, translated through typography, layout and the structure of the booklet.<br><br>
+                The textual content is deliberately romantic. The texts are drawn from the “missed connections” section of Craigslist, where people try to reconnect with someone briefly encountered, without any direct means of contact. This intimate, vulnerable material is diverted and treated purely as typographic content.
+                </span></p>`,
+            2: `<p>
+                <span class="details-toggle">project description</span>
+                <span class="details-extra">
+                <br><br><strong>ARTISANPIECESAUTHENTICPURPOSE</strong><br><br>
+                This project develops the full visual identity of a company that designs caps made from recycled materials. The brand combines craftsmanship, contemporary design and environmental responsibility, positioning itself within sustainable, responsible fashion.<br><br>
+                The visual universe is inspired by streetwear culture and contemporary urban aesthetics. The identity aims to reflect an avant‑garde brand anchored in the city. The logo is rooted in the history of the baseball cap and is directly inspired by Brooklyn, associated with early cap makers and a strong symbol of streetwear culture. This reference anchors the brand in an authentic urban heritage. In short, APAP draws directly from streetwear culture and celebrates a contemporary urban culture.
+                </span></p>`,
+            3: `<p>
+                <span class="details-toggle">project description</span>
+                <span class="details-extra">
+                <br><br><strong>PACKAGING FOR A SUSTAINABLE CULINARY PRODUCT</strong><br><br>
+                This project creates packaging for a culinary object designed according to principles of durability and re‑use. The goal was to develop packaging able to clearly communicate the product’s ecological values.<br><br>
+                The product is a reusable tea capsule, intended to reduce waste generated by single‑use capsules. After infusion, the capsule can also be used as fertilizer for home gardening, extending the product’s life cycle and turning its use into an ecological gesture.
+                </span></p>`
+        };
+
+        const left = document.getElementById('left-panel');
+        const middle = document.getElementById('middle-panel');
+        const list = document.getElementById('item-list');
+        let currentLang = 'fr';
+
+        function scrollToTop(){
+            const wrapper = document.querySelector('.scroll-wrapper');
+            if(wrapper){
+                wrapper.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function show(id, li){
+            left.innerHTML = items[id] || '';
+            left.classList.add('visible');
+            middle.innerHTML = details[id] || '';
+            middle.classList.add('visible');
+
+            // align the top of the middle panel content with the top of the list (same height for all pages)
+            const rightPanel = document.querySelector('.right-panel');
+            if (rightPanel && list) {
+                const listRect = list.getBoundingClientRect();
+                const panelRect = rightPanel.getBoundingClientRect();
+                const offset = Math.max(0, listRect.top - panelRect.top);
+                middle.style.marginTop = offset + 'px';
+            }
+        }
+
+        function activate(li){
+            // remove active from others
+            list.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+            if(li) li.classList.add('active');
+        }
+
+        function reset(){
+            left.innerHTML =
+                '<div class="city-label">Montréal</div>' +
+                '<button type="button" class="contact-toggle">Contact</button>' +
+                '<div class="contact-email" aria-hidden="true">yasred16@gmail.com</div>';
+            left.classList.remove('visible');
+            middle.innerHTML = '';
+            middle.classList.remove('visible');
+            list.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+        }
+
+        // clicking a list item toggles it: activate and show content, or reset if already active
+        list.addEventListener('click', (e) => {
+            const li = e.target.closest('li');
+            if(!li) return;
+            if(li.classList.contains('active')){
+                reset();
+            } else {
+                show(li.dataset.id, li);
+                activate(li);
+            }
+        });
+
+        // keyboard activation with toggle behavior
+        list.addEventListener('keydown', (e) => {
+            const li = e.target.closest('li');
+            if(!li) return;
+            if(e.key === 'Enter' || e.key === ' '){
+                e.preventDefault();
+                if(li.classList.contains('active')){
+                    reset();
+                } else {
+                    show(li.dataset.id, li);
+                    activate(li);
+                }
+            }
+        });
+
+        // clicking the title resets to base page
+        const title = document.querySelector('h1');
+        if(title){
+            title.addEventListener('click', reset);
+        }
+
+        // initial state: main page with Montréal top-left
+        reset();
+
+        // Custom pink scroll dot: appears only while scrolling
+        const scrollWrapper = document.querySelector('.scroll-wrapper');
+        const scrollDot = document.querySelector('.scroll-dot');
+        const clickDot = document.querySelector('.click-dot');
+
+        if(scrollWrapper && scrollDot){
+            let hideTimeout;
+            const updateDot = () => {
+                const scrollHeight = scrollWrapper.scrollHeight;
+                const clientHeight = scrollWrapper.clientHeight;
+                const maxScroll = scrollHeight - clientHeight;
+                if(maxScroll <= 0){
+                    scrollDot.style.opacity = 0;
+                    return;
+                }
+
+                const ratio = scrollWrapper.scrollTop / maxScroll;
+                const marginTop = 20;
+                const marginBottom = 20;
+                const trackHeight = window.innerHeight - marginTop - marginBottom - 7;
+                const y = marginTop + ratio * Math.max(trackHeight, 0);
+                scrollDot.style.top = y + 'px';
+            };
+
+            scrollWrapper.addEventListener('scroll', () => {
+                updateDot();
+                scrollDot.style.opacity = 1;
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(() => {
+                    scrollDot.style.opacity = 0;
+                }, 600);
+            });
+
+            // initial position if already scrolled
+            updateDot();
+        }
+
+        // Pink dot on click, only on the main page (no active item)
+        if(scrollWrapper && clickDot && list){
+            scrollWrapper.addEventListener('click', (e) => {
+                // ne pas afficher le point si on clique sur un élément de la bullet liste
+                const t = e.target;
+                if(t.closest('.item-list')) return;
+
+                const rect = scrollWrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left + scrollWrapper.scrollLeft;
+                const y = e.clientY - rect.top + scrollWrapper.scrollTop;
+
+                clickDot.style.left = (x - 3.5) + 'px';
+                clickDot.style.top = (y - 3.5) + 'px';
+
+                clickDot.classList.add('visible');
+                setTimeout(() => {
+                    clickDot.classList.remove('visible');
+                }, 350);
+            });
+        }
+
+        // clic sur "description du projet" pour afficher le reste du texte
+        middle.addEventListener('click', (e) => {
+            const toggle = e.target.closest('.details-toggle');
+            if (!toggle) return;
+            const extra = middle.querySelector('.details-extra');
+            if (!extra) return;
+            extra.classList.add('visible');
+            toggle.style.display = 'none';
+        });
+
+        // afficher / cacher l'email quand on clique sur "contact"
+        left.addEventListener('click', (e) => {
+            const btn = e.target.closest('.contact-toggle');
+            if (!btn) return;
+            const email = left.querySelector('.contact-email');
+            if (!email) return;
+            const nowVisible = !email.classList.contains('visible');
+            email.classList.toggle('visible', nowVisible);
+            email.setAttribute('aria-hidden', nowVisible ? 'false' : 'true');
+        });
+
+        // --- Ajout : gestion ENG/FR sans modifier le comportement existant ---
+
+        const langToggle = document.querySelector('.lang-toggle');
+
+        function getActiveId() {
+            const activeLi = list.querySelector('li.active');
+            return activeLi ? activeLi.dataset.id : null;
+        }
+
+        function translateLeftToEnglish(id) {
+            if (id === '2') {
+                // APAP : traduire les labels
+                left.innerHTML = left.innerHTML
+                    .replace('dépliant', 'leaflet')
+                    .replace('produit', 'product')
+                    .replace('feed instagram', 'Instagram feed');
+            } else if (id === '3') {
+                // Eartea : traduire les labels
+                left.innerHTML = left.innerHTML
+                    .replace('face', 'front')
+                    .replace('derrière', 'back')
+                    .replace('dessus', 'top')
+                    .replace('dessous', 'bottom')
+                    .replace('côté', 'side');
+            }
+        }
+
+        function toEnglish() {
+            currentLang = 'en';
+            if (langToggle) langToggle.textContent = 'FR';
+
+            const id = getActiveId();
+            if (!id) {
+                const city = left.querySelector('.city-label');
+                if (city) city.textContent = 'Montreal';
+                // Contact reste le même mot
+                return;
+            }
+            if (detailsEn[id]) {
+                middle.innerHTML = detailsEn[id];
+            }
+            translateLeftToEnglish(id);
+        }
+
+        function toFrench() {
+            currentLang = 'fr';
+            if (langToggle) langToggle.textContent = 'ENG';
+
+            const id = getActiveId();
+            if (!id) {
+                reset();
+                return;
+            }
+            const li = list.querySelector(`li[data-id="${id}"]`);
+            if (li) {
+                show(id, li);   // réutilise le comportement FR existant
+                activate(li);
+            }
+        }
+
+        if (langToggle) {
+            langToggle.addEventListener('click', () => {
+                if (currentLang === 'fr') {
+                    toEnglish();
+                } else {
+                    toFrench();
+                }
+            });
+        }
+
+        // Quand ENG est actif et qu’on change de projet, ré-appliquer la traduction
+        list.addEventListener('click', (e) => {
+            if (currentLang !== 'en') return;
+            const li = e.target.closest('li');
+            if (!li || !li.classList.contains('active')) return;
+            const id = li.dataset.id;
+            if (detailsEn[id]) {
+                middle.innerHTML = detailsEn[id];
+            }
+            translateLeftToEnglish(id);
+        });
+
+        list.addEventListener('keydown', (e) => {
+            if (currentLang !== 'en') return;
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const li = e.target.closest('li');
+            if (!li || !li.classList.contains('active')) return;
+            const id = li.dataset.id;
+            if (detailsEn[id]) {
+                middle.innerHTML = detailsEn[id];
+            }
+            translateLeftToEnglish(id);
+        });
+    </script>
+</body>
+</html>
